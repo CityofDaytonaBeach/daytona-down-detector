@@ -6,6 +6,35 @@ Lead Developer: Daniel Gurczynski
 
 ## Usage
 
+After this repository is uploaded to GitHub, use jsDelivr from any app:
+
+```text
+https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js
+https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.browser.js
+```
+
+ES module:
+
+```js
+import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+
+const client = createDaytonaDownDetectorClient({ baseUrl: "https://your-api-domain.com" });
+const status = await client.getStatus("microsoft-com");
+```
+
+Browser script:
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.browser.js"></script>
+<script>
+  const client = DaytonaDownDetector.createDaytonaDownDetectorClient({
+    baseUrl: "https://your-api-domain.com"
+  });
+</script>
+```
+
+Local import:
+
 ```js
 import { createDownDetectorClient } from "./sdk/src/index.js";
 

@@ -81,6 +81,42 @@ curl http://localhost:3000/api/status/microsoft-com
 
 The SDK is included in `sdk/`.
 
+After this repository is uploaded to GitHub, the jsDelivr URLs are:
+
+```text
+https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js
+https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.browser.js
+```
+
+These URLs will work after this repository is uploaded to `CityofDaytonaBeach/daytona-down-detector` on GitHub.
+
+ES module usage in any app:
+
+```js
+import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+
+const client = createDaytonaDownDetectorClient({
+  baseUrl: "https://your-api-domain.com",
+});
+
+const status = await client.getStatus("microsoft-com");
+```
+
+Plain browser script usage:
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.browser.js"></script>
+<script>
+  const client = DaytonaDownDetector.createDaytonaDownDetectorClient({
+    baseUrl: "https://your-api-domain.com"
+  });
+
+  client.getStatus("microsoft-com").then(console.log);
+</script>
+```
+
+Local SDK usage:
+
 ```js
 import { createDownDetectorClient } from "./sdk/src/index.js";
 
@@ -98,11 +134,13 @@ await client.createCompany({
 
 ## React Example
 
+Use the jsDelivr ESM URL directly in React if your bundler allows URL imports, or copy `sdk/src/index.js` into your app.
+
 ```jsx
 import { useEffect, useState } from "react";
-import { createDownDetectorClient } from "./sdk/src/index.js";
+import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
 
-const client = createDownDetectorClient({ baseUrl: "http://localhost:3000" });
+const client = createDaytonaDownDetectorClient({ baseUrl: "https://your-api-domain.com" });
 
 export function DaytonaStatusCard() {
   const [status, setStatus] = useState(null);

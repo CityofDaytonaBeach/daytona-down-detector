@@ -4,8 +4,12 @@
   "description": "JavaScript SDK for Daytona Down Detector.",
   "type": "module",
   "main": "src/index.js",
+  "browser": "dist/daytona-down-detector.browser.js",
+  "module": "dist/daytona-down-detector.esm.js",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./cdn": "./dist/daytona-down-detector.esm.js",
+    "./browser": "./dist/daytona-down-detector.browser.js"
   },
   "scripts": {
     "smoke": "node scripts/smoke-test.js"
