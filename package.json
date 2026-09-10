@@ -1,0 +1,14 @@
+{
+  "name": "daytona-down-detector",
+  "version": "1.0.0",
+  "description": "Daytona Down Detector: a JSON-backed outage detection API and SDK for technology, civic-tech, and government services.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node scripts/seed-companies.js",
+    "smoke": "node scripts/smoke-test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

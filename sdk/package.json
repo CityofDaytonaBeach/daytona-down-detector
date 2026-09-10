@@ -1,0 +1,16 @@
+{
+  "name": "daytona-down-detector-sdk",
+  "version": "1.0.0",
+  "description": "JavaScript SDK for Daytona Down Detector.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "smoke": "node scripts/smoke-test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
