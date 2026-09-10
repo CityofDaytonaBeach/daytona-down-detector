@@ -11,7 +11,7 @@ export class DaytonaDownDetectorClient {
   constructor({ baseUrl = "http://localhost:3000", fetchImpl = globalThis.fetch, headers = {} } = {}) {
     if (!fetchImpl) throw new Error("A fetch implementation is required.");
     this.baseUrl = baseUrl.replace(/\/$/, "");
-    this.fetch = fetchImpl;
+    this.fetch = fetchImpl === globalThis.fetch ? fetchImpl.bind(globalThis) : fetchImpl;
     this.headers = headers;
   }
 

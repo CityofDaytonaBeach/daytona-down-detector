@@ -250,11 +250,14 @@
     </main>
 
     <script type="module">
-      import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+      import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js?v=2";
 
-      const SDK_URL = "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+      const SDK_URL = "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js?v=2";
       const API_URL = "http://localhost:3000";
-      const client = createDaytonaDownDetectorClient({ baseUrl: API_URL });
+      const client = createDaytonaDownDetectorClient({
+        baseUrl: API_URL,
+        fetchImpl: window.fetch.bind(window),
+      });
 
       const cards = document.querySelector("#cards");
       const search = document.querySelector("#search");

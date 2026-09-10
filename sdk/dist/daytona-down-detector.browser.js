@@ -13,6 +13,7 @@
       options = options || {};
       this.baseUrl = (options.baseUrl || "http://localhost:3000").replace(/\/$/, "");
       this.fetch = options.fetchImpl || global.fetch;
+      if (this.fetch === global.fetch) this.fetch = this.fetch.bind(global);
       this.headers = options.headers || {};
       if (!this.fetch) throw new Error("A fetch implementation is required.");
     }

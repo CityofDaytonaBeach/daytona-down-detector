@@ -82,6 +82,7 @@ import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/Cit
 
 const client = createDaytonaDownDetectorClient({
   baseUrl: "https://your-api-domain.com",
+  fetchImpl: window.fetch.bind(window),
 });
 
 const status = await client.getStatus("microsoft-com");
@@ -150,6 +151,12 @@ test-sdk.html
 ```
 
 The page includes search and renders 100 status cards from `http://localhost:3000`.
+
+If jsDelivr is still serving an older cached SDK file, use this local-only test page first:
+
+```text
+test-sdk-local.html
+```
 
 The SDK import used by the page is:
 

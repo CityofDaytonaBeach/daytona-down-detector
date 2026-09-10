@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daytona Down Detector Local SDK Test</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; background: #f4f7fb; color: #172033; }
+      header { padding: 28px 20px; background: #003f6b; color: white; }
+      main { max-width: 1200px; margin: 20px auto; padding: 0 16px; }
+      input, button { min-height: 42px; border-radius: 10px; font: inherit; }
+      input { width: min(520px, 100%); border: 1px solid #cbd7e6; padding: 0 12px; }
+      button { border: 0; background: #003f6b; color: white; padding: 0 16px; font-weight: 700; }
+      .meta { margin: 12px 0; color: #526176; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+      .card { background: white; border: 1px solid #d9e2ef; border-radius: 14px; padding: 14px; }
+      .state { display: inline-block; margin: 10px 0; border-radius: 999px; padding: 6px 8px; color: white; background: #07864b; font-size: 12px; font-weight: 700; }
+      .error { display: none; margin: 12px 0; padding: 12px; border-radius: 10px; background: #fff1f2; color: #9f1239; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Daytona Down Detector Local SDK Test</h1>
+      <p>This version imports the SDK from `./sdk/dist/daytona-down-detector.esm.js` for immediate local testing.</p>
+    </header>
+    <main>
+      <input id="search" placeholder="Search civicplus, microsoft, cityofnewyork..." />
+      <button id="button">Search</button>
+      <p class="meta">API: <code>http://localhost:3000</code> | Loaded: <strong id="count">0</strong></p>
+      <div id="error" class="error"></div>
+      <section id="cards" class="grid"></section>
+    </main>
+    <script type="module">
+      import { createDaytonaDownDetectorClient } from "./sdk/dist/daytona-down-detector.esm.js";
+
+      const client = createDaytonaDownDetectorClient({
+        baseUrl: "http://localhost:3000",
+        fetchImpl: window.fetch.bind(window),
+      });
+      const cards = document.querySelector("#cards");
+      const search = document.querySelector("#search");
+      const count = document.querySelector("#count");
+      const error = document.querySelector("#error");
+      document.querySelector("#button").addEventListener("click", () => load(search.value));
+      search.addEventListener("keydown", (event) => { if (event.key === "Enter") load(search.value); });
+      load("");
+
+      async function load(term) {
+        try {
+          error.style.display = "none";
+          cards.textContent = "Loading...";
+          const companies = await client.listCompanies({ search: term, limit: 100 });
+          const statuses = await Promise.all(companies.items.map((company) => client.getStatus(company.slug)));
+          count.textContent = statuses.length;
+          cards.innerHTML = statuses.map((status) => `
+            <article class="card">
+              <h2>${escapeHtml(status.name)}</h2>
+              <p>${escapeHtml(status.domain)}</p>
+              <span class="state">${escapeHtml(status.state)}</span>
+              <p>Score: ${status.score}/100</p>
+              <p>Confidence: ${status.confidence}%</p>
+              <p>Reports: ${status.recentReportCount}</p>
+            </article>
+          `).join("");
+        } catch (caught) {
+          cards.textContent = "";
+          error.style.display = "block";
+          error.textContent = caught.message || String(caught);
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+      }
+    </script>
+  </body>
+</html>
