@@ -99,8 +99,8 @@ With the deployed URL of your Daytona Down Detector API.
 After uploading this repository to GitHub under `CityofDaytonaBeach/daytona-down-detector`, these SDK URLs are ready to use:
 
 ```text
-https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js
-https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.browser.js
+https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@a8647cb/sdk/dist/daytona-down-detector.esm.js
+https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@a8647cb/sdk/dist/daytona-down-detector.browser.js
 ```
 
 Use the ESM URL for React, Vite, modern browsers, and module-based apps.
@@ -112,7 +112,7 @@ Use the browser URL for a plain `<script>` tag.
 ES module:
 
 ```js
-import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@a8647cb/sdk/dist/daytona-down-detector.esm.js";
 
 const client = createDaytonaDownDetectorClient({
   baseUrl: "https://your-api-domain.com",
@@ -126,7 +126,7 @@ console.log(status);
 Plain HTML:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.browser.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@a8647cb/sdk/dist/daytona-down-detector.browser.js"></script>
 <script>
   const client = DaytonaDownDetector.createDaytonaDownDetectorClient({
     baseUrl: "https://your-api-domain.com"
@@ -150,7 +150,7 @@ const client = createDownDetectorClient({
 
 ```jsx
 import { useEffect, useState } from "react";
-import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+import { createDaytonaDownDetectorClient } from "./sdk/dist/daytona-down-detector.esm.js";
 
 const client = createDaytonaDownDetectorClient({
   baseUrl: "https://your-api-domain.com",
@@ -195,7 +195,7 @@ test-sdk-local.html
 The SDK import used by the page is:
 
 ```js
-import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@a8647cb/sdk/dist/daytona-down-detector.esm.js";
 ```
 
 ## Add A Site From Any App
