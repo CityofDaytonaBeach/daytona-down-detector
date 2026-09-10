@@ -141,6 +141,22 @@ export function DaytonaStatusCard() {
 }
 ```
 
+## Local HTML SDK Test Page
+
+Open this file in a browser to test the jsDelivr SDK URL against your local API:
+
+```text
+test-sdk.html
+```
+
+The page includes search and renders 100 status cards from `http://localhost:3000`.
+
+The SDK import used by the page is:
+
+```js
+import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+```
+
 ## Add A Site From Any App
 
 ```js

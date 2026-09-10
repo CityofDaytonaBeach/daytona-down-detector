@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daytona Down Detector SDK Test</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f4f7fb;
+        color: #172033;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      header {
+        background: linear-gradient(135deg, #003f6b, #0072bc 52%, #00a7d8);
+        color: white;
+        padding: 32px 20px;
+      }
+
+      main {
+        width: min(1400px, calc(100% - 32px));
+        margin: -24px auto 48px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(30px, 5vw, 58px);
+        letter-spacing: -0.06em;
+      }
+
+      .subtitle {
+        margin: 0;
+        max-width: 900px;
+        color: rgba(255, 255, 255, 0.86);
+        line-height: 1.5;
+      }
+
+      .panel {
+        background: white;
+        border: 1px solid #d9e2ef;
+        border-radius: 22px;
+        box-shadow: 0 18px 60px rgba(23, 32, 51, 0.12);
+        padding: 18px;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      input,
+      button {
+        border-radius: 14px;
+        font: inherit;
+        min-height: 46px;
+      }
+
+      input {
+        border: 1px solid #cbd7e6;
+        padding: 0 14px;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: #0072bc;
+        box-shadow: 0 0 0 4px rgba(0, 114, 188, 0.13);
+      }
+
+      button {
+        border: 0;
+        background: #003f6b;
+        color: white;
+        cursor: pointer;
+        font-weight: 700;
+        padding: 0 18px;
+      }
+
+      button.secondary {
+        background: #e8f1fa;
+        color: #003f6b;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+        color: #526176;
+        font-size: 14px;
+      }
+
+      .pill {
+        background: #f1f5fa;
+        border: 1px solid #dbe5f1;
+        border-radius: 999px;
+        padding: 7px 10px;
+      }
+
+      .error {
+        display: none;
+        margin-top: 14px;
+        border: 1px solid #fecaca;
+        background: #fff1f2;
+        color: #9f1239;
+        border-radius: 14px;
+        padding: 12px;
+        line-height: 1.45;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .card {
+        background: white;
+        border: 1px solid #d9e2ef;
+        border-radius: 18px;
+        padding: 16px;
+        min-height: 188px;
+        box-shadow: 0 8px 28px rgba(23, 32, 51, 0.07);
+      }
+
+      .card h2 {
+        margin: 0 0 6px;
+        font-size: 18px;
+        letter-spacing: -0.02em;
+      }
+
+      .domain {
+        color: #526176;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+
+      .status-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 16px 0 12px;
+      }
+
+      .state {
+        border-radius: 999px;
+        color: white;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        padding: 7px 9px;
+        text-transform: uppercase;
+      }
+
+      .operational {
+        background: #07864b;
+      }
+
+      .possible_issue {
+        background: #ca8a04;
+      }
+
+      .degraded {
+        background: #ea580c;
+      }
+
+      .major_outage {
+        background: #dc2626;
+      }
+
+      .score {
+        color: #172033;
+        font-weight: 800;
+      }
+
+      .details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        color: #526176;
+        font-size: 13px;
+      }
+
+      .details strong {
+        display: block;
+        color: #172033;
+        font-size: 18px;
+      }
+
+      @media (max-width: 1100px) {
+        .grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 780px) {
+        main {
+          width: min(100% - 20px, 720px);
+        }
+
+        .controls {
+          grid-template-columns: 1fr;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Daytona Down Detector</h1>
+      <p class="subtitle">
+        Local SDK/API test page. This page loads the SDK from jsDelivr and renders 100 live status cards from the API.
+      </p>
+    </header>
+
+    <main>
+      <section class="panel">
+        <div class="controls">
+          <input id="search" type="search" value="" placeholder="Search Microsoft, CivicPlus, Jotform, cityofnewyork, government..." />
+          <button id="searchButton" type="button">Search</button>
+          <button id="reloadButton" class="secondary" type="button">Load 100</button>
+        </div>
+
+        <div class="meta">
+          <span class="pill">SDK: <code id="sdkUrl"></code></span>
+          <span class="pill">API: <code id="apiUrl"></code></span>
+          <span class="pill">Loaded: <strong id="loadedCount">0</strong></span>
+          <span class="pill">Catalog: <strong id="catalogCount">...</strong></span>
+        </div>
+
+        <div id="error" class="error"></div>
+      </section>
+
+      <section id="cards" class="grid" aria-live="polite"></section>
+    </main>
+
+    <script type="module">
+      import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+
+      const SDK_URL = "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
+      const API_URL = "http://localhost:3000";
+      const client = createDaytonaDownDetectorClient({ baseUrl: API_URL });
+
+      const cards = document.querySelector("#cards");
+      const search = document.querySelector("#search");
+      const errorBox = document.querySelector("#error");
+      const loadedCount = document.querySelector("#loadedCount");
+      const catalogCount = document.querySelector("#catalogCount");
+
+      document.querySelector("#sdkUrl").textContent = SDK_URL;
+      document.querySelector("#apiUrl").textContent = API_URL;
+      document.querySelector("#searchButton").addEventListener("click", () => loadCards(search.value));
+      document.querySelector("#reloadButton").addEventListener("click", () => loadCards(""));
+      search.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") loadCards(search.value);
+      });
+
+      await boot();
+
+      async function boot() {
+        try {
+          const health = await client.health();
+          catalogCount.textContent = health.companies.toLocaleString();
+          await loadCards("");
+        } catch (error) {
+          showError(error);
+        }
+      }
+
+      async function loadCards(searchTerm) {
+        clearError();
+        cards.innerHTML = "";
+        loadedCount.textContent = "0";
+        cards.appendChild(loadingCard());
+
+        try {
+          const result = await client.listCompanies({ search: searchTerm, limit: 100 });
+          const statuses = await Promise.all(result.items.map((company) => client.getStatus(company.slug)));
+          cards.innerHTML = statuses.map(renderCard).join("");
+          loadedCount.textContent = String(statuses.length);
+        } catch (error) {
+          cards.innerHTML = "";
+          showError(error);
+        }
+      }
+
+      function renderCard(status) {
+        return `
+          <article class="card">
+            <h2>${escapeHtml(status.name)}</h2>
+            <div class="domain">${escapeHtml(status.domain)}</div>
+            <div class="status-row">
+              <span class="state ${escapeHtml(status.state)}">${escapeHtml(status.state.replaceAll("_", " "))}</span>
+              <span class="score">${status.score}/100</span>
+            </div>
+            <div class="details">
+              <span><strong>${status.confidence}%</strong>Confidence</span>
+              <span><strong>${status.recentReportCount}</strong>Reports</span>
+              <span><strong>${status.activeIncidentCount}</strong>Incidents</span>
+              <span><strong>${status.probe ? status.probe.latencyMs + "ms" : "N/A"}</strong>Probe</span>
+            </div>
+          </article>
+        `;
+      }
+
+      function loadingCard() {
+        const element = document.createElement("article");
+        element.className = "card";
+        element.innerHTML = "<h2>Loading...</h2><p class='domain'>Fetching 100 status cards from the SDK/API.</p>";
+        return element;
+      }
+
+      function showError(error) {
+        errorBox.style.display = "block";
+        errorBox.innerHTML = `
+          <strong>Could not load SDK/API test.</strong><br />
+          ${escapeHtml(error.message || String(error))}<br />
+          Make sure the API is running at <code>${API_URL}</code> and the GitHub repo is uploaded so jsDelivr can serve the SDK URL.
+        `;
+      }
+
+      function clearError() {
+        errorBox.style.display = "none";
+        errorBox.textContent = "";
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+    </script>
+  </body>
+</html>
