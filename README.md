@@ -6,18 +6,22 @@ Created for the City of Daytona.
 
 Lead Developer: Daniel Gurczynski
 
-## Features
+GitHub repository: `CityofDaytonaBeach/daytona-down-detector`
 
-- No database or tables required. Data is stored in readable `data/*.json` files.
-- Starts with 25,000 monitored records covering major tech companies, civic-tech platforms, city/county/state-style government sites, and vendors such as CivicPlus, iCompass, IMS, InvGate, and Jotform.
-- Combines user reports, active incidents, and optional live HTTP probes into a single outage score.
-- Returns status state, confidence, top reported issues, top regions, active incident count, and probe metadata.
-- Includes a JavaScript SDK that can be used from React, Node, Next.js, Vite, or other JavaScript apps.
+## What It Does
+
+- Monitors major technical companies, civic-tech platforms, and government website services.
+- Starts with 25,000 records, including Microsoft, CivicPlus, iCompass, IMS, InvGate, Jotform, and generated city/county/state government-style sites.
+- Uses JSON files only. No database, no SQL tables, and no external storage setup required.
+- Accepts public issue reports for monitored sites and services.
+- Scores outages using recent reports, active incidents, and optional live HTTP probes.
+- Includes a JavaScript SDK that can be loaded from jsDelivr in React, HTML, Node, Next.js, Vite, or any JavaScript app.
 
 ## Requirements
 
 - Node.js 18+
-- No database setup
+- A deployed API server for production use
+- No database required
 
 ## Quick Start
 
@@ -26,7 +30,11 @@ npm run seed
 npm start
 ```
 
-The API listens on `http://localhost:3000` by default.
+The API runs locally at:
+
+```text
+http://localhost:3000
+```
 
 Use a different port:
 
@@ -34,63 +42,40 @@ Use a different port:
 PORT=4000 npm start
 ```
 
-On Windows PowerShell:
+PowerShell:
 
 ```powershell
 $env:PORT = "4000"; npm start
 ```
 
-## API Endpoints
+## Important Deployment Note
 
-- `GET /health`
-- `GET /api/companies?search=microsoft&limit=20&offset=0&status=operational`
-- `POST /api/companies` with `{ "name": "My City Portal", "domain": "city.example.gov", "category": "government" }`
-- `GET /api/companies/:slug`
-- `GET /api/status/:slug`
-- `GET /api/outages?limit=20`
-- `POST /api/reports` with `{ "slug": "microsoft-com", "issue": "login", "region": "us-east", "note": "optional" }`
-- `GET /api/incidents/:slug`
-- `POST /api/probe/:slug`
-- `GET /api/analytics/:slug?windowMinutes=1440`
+jsDelivr hosts the SDK JavaScript file only. Your API must still be running somewhere, such as a city server, VPS, Render, Railway, Fly.io, Azure, AWS, or another Node hosting provider.
 
-## Example API Usage
+In every SDK example, replace this:
 
-Create a monitored site:
-
-```bash
-curl -X POST http://localhost:3000/api/companies \
-  -H "content-type: application/json" \
-  -d "{\"name\":\"City of Daytona Portal\",\"domain\":\"daytonabeach.gov\",\"category\":\"government\"}"
+```text
+https://your-api-domain.com
 ```
 
-Report an issue:
+With the deployed URL of your Daytona Down Detector API.
 
-```bash
-curl -X POST http://localhost:3000/api/reports \
-  -H "content-type: application/json" \
-  -d "{\"slug\":\"microsoft-com\",\"issue\":\"login\",\"region\":\"us-east\",\"note\":\"Users cannot sign in\"}"
-```
+## jsDelivr SDK URLs
 
-Check status:
-
-```bash
-curl http://localhost:3000/api/status/microsoft-com
-```
-
-## JavaScript SDK
-
-The SDK is included in `sdk/`.
-
-After this repository is uploaded to GitHub, the jsDelivr URLs are:
+After uploading this repository to GitHub under `CityofDaytonaBeach/daytona-down-detector`, these SDK URLs are ready to use:
 
 ```text
 https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js
 https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.browser.js
 ```
 
-These URLs will work after this repository is uploaded to `CityofDaytonaBeach/daytona-down-detector` on GitHub.
+Use the ESM URL for React, Vite, modern browsers, and module-based apps.
 
-ES module usage in any app:
+Use the browser URL for a plain `<script>` tag.
+
+## SDK Usage
+
+ES module:
 
 ```js
 import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
@@ -100,9 +85,10 @@ const client = createDaytonaDownDetectorClient({
 });
 
 const status = await client.getStatus("microsoft-com");
+console.log(status);
 ```
 
-Plain browser script usage:
+Plain HTML:
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.browser.js"></script>
@@ -115,32 +101,25 @@ Plain browser script usage:
 </script>
 ```
 
-Local SDK usage:
+Local SDK import:
 
 ```js
 import { createDownDetectorClient } from "./sdk/src/index.js";
 
-const client = createDownDetectorClient({ baseUrl: "http://localhost:3000" });
-
-const status = await client.getStatus("microsoft-com");
-const companies = await client.listCompanies({ search: "civicplus", limit: 10 });
-
-await client.createCompany({
-  name: "City of Daytona Portal",
-  domain: "daytonabeach.gov",
-  category: "government",
+const client = createDownDetectorClient({
+  baseUrl: "http://localhost:3000",
 });
 ```
 
 ## React Example
 
-Use the jsDelivr ESM URL directly in React if your bundler allows URL imports, or copy `sdk/src/index.js` into your app.
-
 ```jsx
 import { useEffect, useState } from "react";
 import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js";
 
-const client = createDaytonaDownDetectorClient({ baseUrl: "https://your-api-domain.com" });
+const client = createDaytonaDownDetectorClient({
+  baseUrl: "https://your-api-domain.com",
+});
 
 export function DaytonaStatusCard() {
   const [status, setStatus] = useState(null);
@@ -162,14 +141,90 @@ export function DaytonaStatusCard() {
 }
 ```
 
+## Add A Site From Any App
+
+```js
+await client.createCompany({
+  name: "City of Daytona Beach Portal",
+  domain: "daytonabeach.gov",
+  category: "government",
+  tags: ["government", "public-sector"],
+});
+```
+
+## Report An Outage
+
+```js
+await client.createReport({
+  slug: "microsoft-com",
+  issue: "login",
+  region: "us-east",
+  note: "Users cannot sign in",
+});
+```
+
+## API Endpoints
+
+- `GET /health`
+- `GET /api/companies?search=microsoft&limit=20&offset=0&status=operational`
+- `POST /api/companies`
+- `GET /api/companies/:slug`
+- `GET /api/status/:slug`
+- `GET /api/outages?limit=20`
+- `POST /api/reports`
+- `GET /api/incidents/:slug`
+- `POST /api/probe/:slug`
+- `GET /api/analytics/:slug?windowMinutes=1440`
+
+## API Examples
+
+Create a monitored site:
+
+```bash
+curl -X POST http://localhost:3000/api/companies \
+  -H "content-type: application/json" \
+  -d "{\"name\":\"City of Daytona Beach Portal\",\"domain\":\"daytonabeach.gov\",\"category\":\"government\"}"
+```
+
+Report an issue:
+
+```bash
+curl -X POST http://localhost:3000/api/reports \
+  -H "content-type: application/json" \
+  -d "{\"slug\":\"microsoft-com\",\"issue\":\"login\",\"region\":\"us-east\",\"note\":\"Users cannot sign in\"}"
+```
+
+Check status:
+
+```bash
+curl http://localhost:3000/api/status/microsoft-com
+```
+
+## SDK Methods
+
+- `health()`
+- `listCompanies({ search, status, limit, offset })`
+- `getCompany(slug)`
+- `createCompany({ domain, name, category, tags, slug, monitorUrl, url })`
+- `getStatus(slug)`
+- `listOutages({ limit, offset })`
+- `createReport({ slug, issue, region, note })`
+- `listIncidents(slug)`
+- `runProbe(slug)`
+- `getAnalytics(slug, { windowMinutes })`
+
 ## Data Files
 
 - `data/companies.json`: monitored companies, vendors, and government sites
-- `data/reports.json`: crowd/user outage reports
+- `data/reports.json`: public outage reports
 - `data/incidents.json`: manually tracked incidents
 - `data/probes.json`: latest HTTP probe results
 
-Run `npm run seed` to regenerate the default 25,000-record catalog and reset reports/incidents/probes.
+Run this to regenerate the default 25,000-record catalog and reset reports, incidents, and probes:
+
+```bash
+npm run seed
+```
 
 ## Smoke Tests
 
@@ -185,6 +240,22 @@ SDK smoke test:
 cd sdk
 npm run smoke
 ```
+
+## GitHub Upload
+
+Recommended repository name:
+
+```text
+daytona-down-detector
+```
+
+Recommended GitHub owner:
+
+```text
+CityofDaytonaBeach
+```
+
+Once uploaded to GitHub, apps can load the SDK directly from jsDelivr using the URLs above.
 
 ## Project Credit
 
