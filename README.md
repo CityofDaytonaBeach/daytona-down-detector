@@ -23,6 +23,40 @@ GitHub repository: `CityofDaytonaBeach/daytona-down-detector`
 - A deployed API server for production use
 - No database required
 
+## Free GitHub Pages Site
+
+This repo includes a free static dashboard for GitHub Pages:
+
+```text
+index.html
+```
+
+After uploading this repo to GitHub and enabling Pages, the site URL will be:
+
+```text
+https://CityofDaytonaBeach.github.io/daytona-down-detector/
+```
+
+How to enable it:
+
+1. Upload or push this repo to `CityofDaytonaBeach/daytona-down-detector`.
+2. Go to GitHub repo `Settings`.
+3. Open `Pages`.
+4. Set source to `Deploy from a branch`.
+5. Select branch `main` and folder `/root`.
+6. Save.
+
+The GitHub Pages version works two ways:
+
+- Static demo mode: free, no server required, reads `data/companies.json`, shows 100 searchable status cards as operational demo data.
+- Live API mode: add `?api=https://your-api-domain.com` to use a deployed Daytona Down Detector API through the jsDelivr SDK.
+
+Example live API URL:
+
+```text
+https://CityofDaytonaBeach.github.io/daytona-down-detector/?api=https://your-api-domain.com
+```
+
 ## Quick Start
 
 ```bash

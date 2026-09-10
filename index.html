@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daytona Down Detector</title>
+    <meta name="description" content="Daytona Down Detector free GitHub Pages dashboard for technology, civic-tech, and government service status monitoring." />
+    <style>
+      :root {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #172033;
+        background: #eef5fb;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; }
+
+      .hero {
+        padding: 36px 20px 72px;
+        color: white;
+        background:
+          radial-gradient(circle at 15% 10%, rgba(255,255,255,0.22), transparent 26%),
+          linear-gradient(135deg, #002d4f, #0069aa 55%, #00a5cf);
+      }
+
+      .hero-inner, main { width: min(1380px, calc(100% - 32px)); margin: 0 auto; }
+      h1 { margin: 0 0 10px; font-size: clamp(34px, 6vw, 76px); letter-spacing: -0.07em; line-height: 0.95; }
+      .hero p { margin: 0; max-width: 900px; color: rgba(255,255,255,0.87); line-height: 1.55; font-size: 17px; }
+      main { margin-top: -44px; padding-bottom: 60px; }
+
+      .toolbar {
+        padding: 18px;
+        border: 1px solid #d8e4f0;
+        border-radius: 24px;
+        background: rgba(255,255,255,0.94);
+        box-shadow: 0 24px 70px rgba(18, 38, 63, 0.16);
+        backdrop-filter: blur(10px);
+      }
+
+      .row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; }
+      input, button { min-height: 48px; border-radius: 15px; font: inherit; }
+      input { width: 100%; border: 1px solid #c7d6e6; padding: 0 14px; outline: none; background: white; }
+      input:focus { border-color: #0072bc; box-shadow: 0 0 0 4px rgba(0, 114, 188, 0.14); }
+      button { border: 0; background: #003f6b; color: white; padding: 0 18px; cursor: pointer; font-weight: 800; }
+      button.alt { background: #e7f2fb; color: #003f6b; }
+
+      .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; color: #53647a; font-size: 14px; }
+      .pill { border: 1px solid #dce7f3; background: #f6f9fd; border-radius: 999px; padding: 8px 11px; }
+      .pill strong { color: #172033; }
+      code { overflow-wrap: anywhere; }
+
+      .api-form { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-top: 12px; }
+      .notice { margin-top: 12px; border-radius: 15px; padding: 12px; background: #fff8e6; border: 1px solid #f7d27c; color: #684600; line-height: 1.45; }
+      .error { display: none; margin-top: 12px; border-radius: 15px; padding: 12px; background: #fff1f2; border: 1px solid #fecaca; color: #9f1239; line-height: 1.45; }
+
+      .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+      .card { min-height: 184px; border: 1px solid #d8e4f0; border-radius: 20px; background: white; padding: 16px; box-shadow: 0 10px 30px rgba(18, 38, 63, 0.08); }
+      .card h2 { margin: 0 0 5px; font-size: 18px; letter-spacing: -0.03em; }
+      .domain { color: #53647a; font-size: 13px; overflow-wrap: anywhere; }
+      .status-line { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 15px 0 12px; }
+      .state { border-radius: 999px; padding: 7px 9px; color: white; font-size: 11px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; }
+      .operational { background: #07864b; }
+      .possible_issue { background: #ca8a04; }
+      .degraded { background: #ea580c; }
+      .major_outage { background: #dc2626; }
+      .score { font-weight: 900; }
+      .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; color: #53647a; font-size: 13px; }
+      .stats strong { display: block; color: #172033; font-size: 18px; }
+      .footer { margin-top: 24px; color: #53647a; text-align: center; }
+
+      @media (max-width: 1100px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      @media (max-width: 760px) {
+        .hero-inner, main { width: min(100% - 20px, 720px); }
+        .row, .api-form { grid-template-columns: 1fr; }
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hero">
+      <div class="hero-inner">
+        <h1>Daytona Down Detector</h1>
+        <p>Free GitHub Pages dashboard for testing the Daytona Down Detector catalog, SDK, and API. Created for the City of Daytona. Lead Developer: Daniel Gurczynski.</p>
+      </div>
+    </section>
+
+    <main>
+      <section class="toolbar">
+        <div class="row">
+          <input id="search" type="search" placeholder="Search Microsoft, CivicPlus, Jotform, InvGate, cityofnewyork, government..." />
+          <button id="searchButton" type="button">Search</button>
+          <button id="resetButton" class="alt" type="button">Load 100</button>
+        </div>
+
+        <div class="api-form">
+          <input id="apiInput" type="url" placeholder="Optional live API URL, example: https://your-api-domain.com" />
+          <button id="apiButton" class="alt" type="button">Use Live API</button>
+        </div>
+
+        <div class="meta">
+          <span class="pill">Mode: <strong id="mode">Static GitHub Pages demo</strong></span>
+          <span class="pill">Loaded: <strong id="loadedCount">0</strong></span>
+          <span class="pill">Catalog: <strong id="catalogCount">...</strong></span>
+          <span class="pill">SDK: <code>jsDelivr-ready</code></span>
+        </div>
+
+        <div class="notice">
+          This site is free on GitHub Pages. Static demo mode reads `data/companies.json` from the repo. Live API mode uses the SDK and requires a hosted Daytona Down Detector API URL.
+        </div>
+        <div id="error" class="error"></div>
+      </section>
+
+      <section id="cards" class="grid" aria-live="polite"></section>
+      <p class="footer">City of Daytona | Daytona Down Detector | 25,000 JSON-backed records</p>
+    </main>
+
+    <script type="module">
+      import { createDaytonaDownDetectorClient } from "https://cdn.jsdelivr.net/gh/CityofDaytonaBeach/daytona-down-detector@main/sdk/dist/daytona-down-detector.esm.js?v=3";
+
+      const cards = document.querySelector("#cards");
+      const search = document.querySelector("#search");
+      const apiInput = document.querySelector("#apiInput");
+      const errorBox = document.querySelector("#error");
+      const mode = document.querySelector("#mode");
+      const loadedCount = document.querySelector("#loadedCount");
+      const catalogCount = document.querySelector("#catalogCount");
+      let companies = [];
+      let client = null;
+
+      const urlApi = new URLSearchParams(location.search).get("api");
+      if (urlApi) apiInput.value = urlApi;
+
+      document.querySelector("#searchButton").addEventListener("click", () => load(search.value));
+      document.querySelector("#resetButton").addEventListener("click", () => { search.value = ""; load(""); });
+      document.querySelector("#apiButton").addEventListener("click", () => useApi(apiInput.value));
+      search.addEventListener("keydown", (event) => { if (event.key === "Enter") load(search.value); });
+
+      if (urlApi) {
+        await useApi(urlApi);
+      } else {
+        await useStaticDemo();
+      }
+
+      async function useStaticDemo() {
+        clearError();
+        client = null;
+        mode.textContent = "Static GitHub Pages demo";
+        const response = await fetch("./data/companies.json");
+        companies = await response.json();
+        catalogCount.textContent = companies.length.toLocaleString();
+        await load(search.value);
+      }
+
+      async function useApi(apiUrl) {
+        clearError();
+        const baseUrl = String(apiUrl || "").trim().replace(/\/$/, "");
+        if (!baseUrl) return useStaticDemo();
+        client = createDaytonaDownDetectorClient({ baseUrl, fetchImpl: window.fetch.bind(window) });
+        const health = await client.health();
+        mode.textContent = "Live API via jsDelivr SDK";
+        catalogCount.textContent = Number(health.companies || 0).toLocaleString();
+        await load(search.value);
+      }
+
+      async function load(term) {
+        clearError();
+        cards.innerHTML = "<article class='card'><h2>Loading...</h2><p class='domain'>Building 100 status cards.</p></article>";
+        loadedCount.textContent = "0";
+        try {
+          const statuses = client ? await loadFromApi(term) : loadFromStatic(term);
+          cards.innerHTML = statuses.map(renderCard).join("");
+          loadedCount.textContent = String(statuses.length);
+        } catch (error) {
+          cards.innerHTML = "";
+          showError(error);
+        }
+      }
+
+      async function loadFromApi(term) {
+        const result = await client.listCompanies({ search: term, limit: 100 });
+        return Promise.all(result.items.map((company) => client.getStatus(company.slug)));
+      }
+
+      function loadFromStatic(term) {
+        const needle = String(term || "").toLowerCase();
+        return companies
+          .filter((company) => !needle || [company.name, company.domain, company.category, ...(company.tags || [])].join(" ").toLowerCase().includes(needle))
+          .slice(0, 100)
+          .map((company) => ({
+            slug: company.slug,
+            name: company.name,
+            domain: company.domain,
+            state: "operational",
+            score: 0,
+            confidence: 35,
+            recentReportCount: 0,
+            activeIncidentCount: 0,
+            probe: null,
+          }));
+      }
+
+      function renderCard(status) {
+        return `
+          <article class="card">
+            <h2>${escapeHtml(status.name)}</h2>
+            <div class="domain">${escapeHtml(status.domain)}</div>
+            <div class="status-line">
+              <span class="state ${escapeHtml(status.state)}">${escapeHtml(status.state.replaceAll("_", " "))}</span>
+              <span class="score">${status.score}/100</span>
+            </div>
+            <div class="stats">
+              <span><strong>${status.confidence}%</strong>Confidence</span>
+              <span><strong>${status.recentReportCount}</strong>Reports</span>
+              <span><strong>${status.activeIncidentCount}</strong>Incidents</span>
+              <span><strong>${status.probe ? status.probe.latencyMs + "ms" : "N/A"}</strong>Probe</span>
+            </div>
+          </article>`;
+      }
+
+      function showError(error) {
+        errorBox.style.display = "block";
+        errorBox.textContent = error.message || String(error);
+      }
+
+      function clearError() {
+        errorBox.style.display = "none";
+        errorBox.textContent = "";
+      }
+
+      function escapeHtml(value) {
+        return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+      }
+    </script>
+  </body>
+</html>
