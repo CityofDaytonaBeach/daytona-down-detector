@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,12 +12,14 @@ const companiesFile = path.join(dataDir, "companies.json");
 const reportsFile = path.join(dataDir, "reports.json");
 const incidentsFile = path.join(dataDir, "incidents.json");
 const probesFile = path.join(dataDir, "probes.json");
+const sitesDir = path.join(dataDir, "sites");
 
 const PORT = Number(process.env.PORT || 3000);
 const REPORT_WINDOW_MINUTES = Number(process.env.REPORT_WINDOW_MINUTES || 60);
 
 async function ensureStore() {
   await mkdir(dataDir, { recursive: true });
+  await mkdir(sitesDir, { recursive: true });
   for (const [file, fallback] of [
     [reportsFile, []],
     [incidentsFile, []],
@@ -37,9 +39,48 @@ async function readJson(file, fallback) {
 }
 
 async function writeJson(file, value) {
+  await mkdir(path.dirname(file), { recursive: true });
   const tmpFile = `${file}.${process.pid}.tmp`;
   await writeFile(tmpFile, `${JSON.stringify(value, null, 2)}\n`);
   await rename(tmpFile, file);
+}
+
+function siteFile(slug) {
+  return path.join(sitesDir, `${slugFromDomain(slug)}.json`);
+}
+
+function emptySiteData(slug) {
+  return {
+    slug,
+    reports: [],
+    incidents: [],
+    probe: null,
+    updatedAt: null,
+  };
+}
+
+async function readSiteData(slug) {
+  return readJson(siteFile(slug), emptySiteData(slug));
+}
+
+async function writeSiteData(slug, data) {
+  await writeJson(siteFile(slug), { ...emptySiteData(slug), ...data, slug, updatedAt: new Date().toISOString() });
+}
+
+function combineSiteData(company, legacyReports, legacyIncidents, legacyProbes, siteData = emptySiteData(company.slug)) {
+  return {
+    slug: company.slug,
+    reports: [
+      ...(siteData.reports || []),
+      ...legacyReports.filter((report) => report.slug === company.slug),
+    ],
+    incidents: [
+      ...(siteData.incidents || []),
+      ...legacyIncidents.filter((incident) => incident.slug === company.slug),
+    ],
+    probe: siteData.probe || legacyProbes[company.slug] || null,
+    updatedAt: siteData.updatedAt || null,
+  };
 }
 
 function send(res, status, body, headers = {}) {
@@ -92,15 +133,17 @@ function isValidDomain(domain) {
   return /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/.test(domain) && !domain.includes("..");
 }
 
-function getStatus(company, reports, incidents, probes, now = Date.now()) {
+function getStatus(company, siteData, now = Date.now()) {
   const windowMs = REPORT_WINDOW_MINUTES * 60 * 1000;
+  const reports = siteData.reports || [];
+  const incidents = siteData.incidents || [];
   const recentReports = reports.filter(
     (report) => report.slug === company.slug && now - Date.parse(report.createdAt) <= windowMs,
   );
   const activeIncidents = incidents.filter(
     (incident) => incident.slug === company.slug && incident.status !== "resolved",
   );
-  const probe = probes[company.slug];
+  const probe = siteData.probe;
   const failedProbe = probe && probe.ok === false && now - Date.parse(probe.checkedAt) <= windowMs;
   const reportScore = Math.min(70, recentReports.length * 7);
   const incidentScore = activeIncidents.length ? 40 : 0;
@@ -129,9 +172,29 @@ function getStatus(company, reports, incidents, probes, now = Date.now()) {
     activeIncidentCount: activeIncidents.length,
     topIssues: topCounts(issueCounts),
     topRegions: topCounts(regionCounts),
+    reportChart: reportChart(reports, now),
+    latestIncidents: activeIncidents.slice(0, 3),
     probe: probe || null,
     updatedAt: new Date(now).toISOString(),
   };
+}
+
+function reportChart(reports, now = Date.now(), hours = 24) {
+  const buckets = [];
+  const hourMs = 60 * 60 * 1000;
+  const start = Math.floor((now - (hours - 1) * hourMs) / hourMs) * hourMs;
+  for (let index = 0; index < hours; index += 1) {
+    const bucketStart = start + index * hourMs;
+    const bucketEnd = bucketStart + hourMs;
+    buckets.push({
+      hour: new Date(bucketStart).toISOString(),
+      count: reports.filter((report) => {
+        const created = Date.parse(report.createdAt);
+        return created >= bucketStart && created < bucketEnd;
+      }).length,
+    });
+  }
+  return buckets;
 }
 
 function topCounts(counts) {
@@ -188,7 +251,8 @@ async function route(req, res) {
   const probes = await readJson(probesFile, {});
 
   if (req.method === "GET" && url.pathname === "/health") {
-    return send(res, 200, { ok: true, companies: companies.length, now: new Date().toISOString() });
+    const siteFiles = await readdir(sitesDir).catch(() => []);
+    return send(res, 200, { ok: true, companies: companies.length, siteFiles: siteFiles.length, now: new Date().toISOString() });
   }
 
   if (req.method === "GET" && url.pathname === "/api/companies") {
@@ -201,7 +265,11 @@ async function route(req, res) {
       );
     }
     if (status) {
-      items = items.filter((company) => getStatus(company, reports, incidents, probes).state === status);
+      const statuses = await Promise.all(items.map(async (company) => {
+        const siteData = combineSiteData(company, reports, incidents, probes, await readSiteData(company.slug));
+        return { company, status: getStatus(company, siteData) };
+      }));
+      items = statuses.filter((item) => item.status.state === status).map((item) => item.company);
     }
     return send(res, 200, paginate(items, url));
   }
@@ -230,23 +298,29 @@ async function route(req, res) {
 
     companies.push(company);
     await writeJson(companiesFile, companies);
-    return send(res, 201, { company, status: getStatus(company, reports, incidents, probes) });
+    await writeSiteData(company.slug, emptySiteData(company.slug));
+    return send(res, 201, { company, status: getStatus(company, emptySiteData(company.slug)) });
   }
 
   if (req.method === "GET" && parts[0] === "api" && parts[1] === "companies" && parts[2]) {
     const company = findCompany(companies, parts[2]);
     if (!company) return send(res, 404, { error: "Company not found." });
-    return send(res, 200, { ...company, status: getStatus(company, reports, incidents, probes) });
+    const siteData = combineSiteData(company, reports, incidents, probes, await readSiteData(company.slug));
+    return send(res, 200, { ...company, status: getStatus(company, siteData) });
   }
 
   if (req.method === "GET" && parts[0] === "api" && parts[1] === "status" && parts[2]) {
     const company = findCompany(companies, parts[2]);
     if (!company) return send(res, 404, { error: "Company not found." });
-    return send(res, 200, getStatus(company, reports, incidents, probes));
+    const siteData = combineSiteData(company, reports, incidents, probes, await readSiteData(company.slug));
+    return send(res, 200, getStatus(company, siteData));
   }
 
   if (req.method === "GET" && url.pathname === "/api/outages") {
-    const statuses = companies.map((company) => getStatus(company, reports, incidents, probes));
+    const statuses = await Promise.all(companies.map(async (company) => {
+      const siteData = combineSiteData(company, reports, incidents, probes, await readSiteData(company.slug));
+      return getStatus(company, siteData);
+    }));
     const down = statuses.filter((status) => status.state !== "operational").sort((a, b) => b.score - a.score);
     return send(res, 200, paginate(down, url));
   }
@@ -263,24 +337,50 @@ async function route(req, res) {
       note: String(body.note || "").slice(0, 500),
       createdAt: new Date().toISOString(),
     };
-    reports.unshift(report);
-    await writeJson(reportsFile, reports.slice(0, 50000));
-    return send(res, 201, { report, status: getStatus(company, reports, incidents, probes) });
+    const siteData = await readSiteData(company.slug);
+    siteData.reports = [report, ...(siteData.reports || [])].slice(0, 10000);
+    await writeSiteData(company.slug, siteData);
+    const combined = combineSiteData(company, reports, incidents, probes, siteData);
+    return send(res, 201, { report, status: getStatus(company, combined) });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/incidents") {
+    const body = await readBody(req);
+    const company = findCompany(companies, String(body.slug || ""));
+    if (!company) return send(res, 404, { error: "Company not found." });
+    const incident = {
+      id: randomUUID(),
+      slug: company.slug,
+      title: String(body.title || body.issue || "Service incident").slice(0, 140),
+      status: String(body.status || "investigating").slice(0, 40),
+      severity: String(body.severity || "minor").slice(0, 40),
+      message: String(body.message || body.note || "").slice(0, 1000),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const siteData = await readSiteData(company.slug);
+    siteData.incidents = [incident, ...(siteData.incidents || [])].slice(0, 1000);
+    await writeSiteData(company.slug, siteData);
+    const combined = combineSiteData(company, reports, incidents, probes, siteData);
+    return send(res, 201, { incident, status: getStatus(company, combined) });
   }
 
   if (req.method === "GET" && parts[0] === "api" && parts[1] === "incidents" && parts[2]) {
     const company = findCompany(companies, parts[2]);
     if (!company) return send(res, 404, { error: "Company not found." });
-    return send(res, 200, incidents.filter((incident) => incident.slug === company.slug));
+    const siteData = combineSiteData(company, reports, incidents, probes, await readSiteData(company.slug));
+    return send(res, 200, siteData.incidents);
   }
 
   if (req.method === "POST" && parts[0] === "api" && parts[1] === "probe" && parts[2]) {
     const company = findCompany(companies, parts[2]);
     if (!company) return send(res, 404, { error: "Company not found." });
     const probe = await runProbe(company);
-    probes[company.slug] = probe;
-    await writeJson(probesFile, probes);
-    return send(res, 200, { probe, status: getStatus(company, reports, incidents, probes) });
+    const siteData = await readSiteData(company.slug);
+    siteData.probe = probe;
+    await writeSiteData(company.slug, siteData);
+    const combined = combineSiteData(company, reports, incidents, probes, siteData);
+    return send(res, 200, { probe, status: getStatus(company, combined) });
   }
 
   if (req.method === "GET" && parts[0] === "api" && parts[1] === "analytics" && parts[2]) {
@@ -288,13 +388,15 @@ async function route(req, res) {
     if (!company) return send(res, 404, { error: "Company not found." });
     const windowMinutes = Math.min(Number(url.searchParams.get("windowMinutes") || 1440), 10080);
     const cutoff = Date.now() - windowMinutes * 60 * 1000;
-    const scopedReports = reports.filter((report) => report.slug === company.slug && Date.parse(report.createdAt) >= cutoff);
+    const siteData = combineSiteData(company, reports, incidents, probes, await readSiteData(company.slug));
+    const scopedReports = siteData.reports.filter((report) => report.slug === company.slug && Date.parse(report.createdAt) >= cutoff);
     return send(res, 200, {
       slug: company.slug,
       windowMinutes,
       totalReports: scopedReports.length,
       issues: topCounts(scopedReports.reduce((counts, report) => ({ ...counts, [report.issue]: (counts[report.issue] || 0) + 1 }), {})),
       regions: topCounts(scopedReports.reduce((counts, report) => ({ ...counts, [report.region]: (counts[report.region] || 0) + 1 }), {})),
+      reportChart: reportChart(scopedReports, Date.now(), Math.min(Math.ceil(windowMinutes / 60), 168)),
     });
   }
 

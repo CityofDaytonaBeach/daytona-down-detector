@@ -71,6 +71,7 @@ await downDetector.createReport({
 - `listOutages({ limit, offset })`
 - `createReport({ slug, issue, region, note })`
 - `listIncidents(slug)`
+- `createIncident({ slug, title, status, severity, message })`
 - `runProbe(slug)`
 - `getAnalytics(slug, { windowMinutes })`
 

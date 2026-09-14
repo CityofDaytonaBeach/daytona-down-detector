@@ -59,6 +59,20 @@
       return this.request("/api/incidents/" + encodeURIComponent(required(slug, "slug")));
     }
 
+    createIncident(incident) {
+      incident = incident || {};
+      return this.request("/api/incidents", {
+        method: "POST",
+        body: {
+          slug: required(incident.slug, "slug"),
+          title: incident.title || "Service incident",
+          status: incident.status || "investigating",
+          severity: incident.severity || "minor",
+          message: incident.message || "",
+        },
+      });
+    }
+
     runProbe(slug) {
       return this.request("/api/probe/" + encodeURIComponent(required(slug, "slug")), { method: "POST" });
     }

@@ -18,6 +18,12 @@ const report = await client.createReport({
   region: "us-east",
   note: "SDK smoke test report",
 });
+const incident = await client.createIncident({
+  slug: "microsoft-com",
+  title: "SDK smoke incident",
+  severity: "minor",
+  message: "Testing per-site incident JSON.",
+});
 const analytics = await client.getAnalytics("microsoft-com", { windowMinutes: 60 });
 const outages = await client.listOutages({ limit: 5 });
 
@@ -27,6 +33,7 @@ console.log(JSON.stringify({
   civicplusResults: companies.items.length,
   microsoftStateBeforeReport: status.state,
   reportCreated: Boolean(report.report.id),
+  incidentCreated: Boolean(incident.incident.id),
   analyticsReports: analytics.totalReports,
   outageCount: outages.total,
 }, null, 2));

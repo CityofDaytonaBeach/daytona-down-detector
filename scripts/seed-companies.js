@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -185,6 +185,8 @@ const companies = [...new Set(domains)].slice(0, TARGET_CATALOG_SIZE).map((domai
 });
 
 await mkdir(dataDir, { recursive: true });
+await rm(path.join(dataDir, "sites"), { recursive: true, force: true });
+await mkdir(path.join(dataDir, "sites"), { recursive: true });
 await writeFile(path.join(dataDir, "companies.json"), `${JSON.stringify(companies, null, 2)}\n`);
 await writeFile(path.join(dataDir, "reports.json"), "[]\n");
 await writeFile(path.join(dataDir, "incidents.json"), "[]\n");

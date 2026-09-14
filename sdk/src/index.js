@@ -53,6 +53,13 @@ export class DownDetectorClient {
     return this.request(`/api/incidents/${encodeURIComponent(required(slug, "slug"))}`);
   }
 
+  createIncident({ slug, title = "Service incident", status = "investigating", severity = "minor", message = "" }) {
+    return this.request("/api/incidents", {
+      method: "POST",
+      body: { slug: required(slug, "slug"), title, status, severity, message },
+    });
+  }
+
   runProbe(slug) {
     return this.request(`/api/probe/${encodeURIComponent(required(slug, "slug"))}`, { method: "POST" });
   }

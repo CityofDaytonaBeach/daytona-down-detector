@@ -14,6 +14,8 @@ GitHub repository: `CityofDaytonaBeach/daytona-down-detector`
 - Starts with 25,000 records, including Microsoft, CivicPlus, iCompass, IMS, InvGate, Jotform, and generated city/county/state government-style sites.
 - Uses JSON files only. No database, no SQL tables, and no external storage setup required.
 - Accepts public issue reports for monitored sites and services.
+- Stores mutable updates per service in separate JSON files under `data/sites/`.
+- Shows incident data and 24-hour report chart data on status cards.
 - Scores outages using recent reports, active incidents, and optional live HTTP probes.
 - Includes a JavaScript SDK that can be loaded from jsDelivr in React, HTML, Node, Next.js, Vite, or any JavaScript app.
 
@@ -230,6 +232,7 @@ await client.createReport({
 - `GET /api/outages?limit=20`
 - `POST /api/reports`
 - `GET /api/incidents/:slug`
+- `POST /api/incidents`
 - `POST /api/probe/:slug`
 - `GET /api/analytics/:slug?windowMinutes=1440`
 
@@ -257,6 +260,14 @@ Check status:
 curl http://localhost:3000/api/status/microsoft-com
 ```
 
+Create an incident:
+
+```bash
+curl -X POST http://localhost:3000/api/incidents \
+  -H "content-type: application/json" \
+  -d "{\"slug\":\"microsoft-com\",\"title\":\"Login outage\",\"status\":\"investigating\",\"severity\":\"major\",\"message\":\"Users are reporting login failures.\"}"
+```
+
 ## SDK Methods
 
 - `health()`
@@ -267,6 +278,7 @@ curl http://localhost:3000/api/status/microsoft-com
 - `listOutages({ limit, offset })`
 - `createReport({ slug, issue, region, note })`
 - `listIncidents(slug)`
+- `createIncident({ slug, title, status, severity, message })`
 - `runProbe(slug)`
 - `getAnalytics(slug, { windowMinutes })`
 
@@ -276,6 +288,7 @@ curl http://localhost:3000/api/status/microsoft-com
 - `data/reports.json`: public outage reports
 - `data/incidents.json`: manually tracked incidents
 - `data/probes.json`: latest HTTP probe results
+- `data/sites/:slug.json`: per-site mutable reports, incidents, probe result, and update timestamp
 
 Run this to regenerate the default 25,000-record catalog and reset reports, incidents, and probes:
 
